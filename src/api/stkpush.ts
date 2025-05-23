@@ -40,6 +40,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const shortcode = process.env.DARAJA_BUSINESS_SHORT_CODE!;
     const passkey = process.env.DARAJA_BUSINESS_SHORT_CODE_PASSKEY!;
     const baseUrl = process.env.BASE_URL!;
+    if  (!passkey) {
+      console.error("❌ DARAJA_BUSINESS_SHORT_CODE_PASSKEY is undefined!");
+    }
 
     // Generate EAT timestamp ONCE
     const timestamp = getEATTimestamp();
