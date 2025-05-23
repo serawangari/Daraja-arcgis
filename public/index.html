@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>M-Pesa Payment</title>
+    <style>
+        /* Keep your existing styles */
+        body { max-width: 500px; margin: 2rem auto; padding: 20px; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Make Payment</h2>
+        <input type="tel" id="phone" placeholder="07XX XXX XXX">
+        <button onclick="initiatePayment()">Pay Now</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        async function initiatePayment() {
+            const phone = document.getElementById('phone').value;
+            const statusDiv = document.getElementById('status');
+            const button = document.querySelector('button');
+
+            if (!/^07\d{8}$/.test(phone)) {
+                statusDiv.textContent = 'Invalid phone number format';
+                return;
+            }
+
+            button.disabled = true;
+            statusDiv.textContent = 'Initiating payment...';
+
+            try {
+                const response = await fetch('/api/stkpush', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: `254${phone.slice(1)}`,
+                        amount: '1'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    statusDiv.textContent = 'Check your phone for STK prompt!';
+                } else {
+                    statusDiv.textContent = `Error: ${data.error}`;
+                }
+            } catch (error) {
+                statusDiv.textContent = 'Failed to connect to server';
+            } finally {
+                button.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
