@@ -7,22 +7,23 @@
   "routes": [
     { "src": "/", "dest": "/public/index.html" },
     { "src": "/api/(.*)", "dest": "/src/api/$1.ts" }
-  ]
-}
-{
+  ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "src/api/callback",
       "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "ALLOWALL"
-        },
-        {
-          "key": "Content-Security-Policy",
-          "value": "frame-ancestors *"
-        }
+        { "key": "X-Frame-Options", "value": "ALLOWALL" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "ALLOWALL" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
   ]
 }
+
+  
