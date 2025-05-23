@@ -10,20 +10,15 @@
   ],
   "headers": [
     {
-      "source": "src/api/callback",
+      "source": "/(.*)",  
       "headers": [
         { "key": "X-Frame-Options", "value": "ALLOWALL" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
-      ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "ALLOWALL" },
+        { "key": "Content-Security-Policy", "value": "frame-ancestors *" },
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
   ]
 }
+
 
   
