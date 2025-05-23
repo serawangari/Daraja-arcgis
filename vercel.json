@@ -14,7 +14,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "frame-ancestors https://experience.arcgis.com"
+          "value": "frame-ancestors https://experience.arcgis.com/experience/0586cfc97e2b4d52b29bf58528422485"
         },
         {
           "key": "Access-Control-Allow-Origin",
@@ -32,6 +32,7 @@
     }
   ]
 }
+
 
 
   
