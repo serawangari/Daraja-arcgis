@@ -1,8 +1,8 @@
 // src/utils/darajaAuth.ts
-import * as axios from 'axios';             // ← CommonJS/namespace import
+import axios from 'axios';
 
-export const getAccessToken = async (): Promise<string> => { 
-  const consumerKey    = process.env.DARAJA_CONSUMER_KEY!;
+export const getAccessToken = async (): Promise<string> => {
+  const consumerKey = process.env.DARAJA_CONSUMER_KEY!;
   const consumerSecret = process.env.DARAJA_CONSUMER_SECRET!;
   const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
 
