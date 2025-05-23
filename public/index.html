@@ -1,57 +1,88 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>M-Pesa Payment</title>
-    <style>
-        /* Keep your existing styles */
-        body { max-width: 500px; margin: 2rem auto; padding: 20px; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Make Payment</h2>
-        <input type="tel" id="phone" placeholder="07XX XXX XXX">
-        <button onclick="initiatePayment()">Pay Now</button>
-        <div id="status"></div>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STK Push Payment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-lg max-w-md w-full p-6">
+      <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Pay with M-Pesa</h1>
+
+      <form id="stkForm" class="space-y-4">
+        <div>
+          <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            required
+            placeholder="e.g. 254712345678"
+            class="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+          />
+        </div>
+
+        <div>
+          <label for="amount" class="block text-sm font-medium text-gray-700">Amount (KES)</label>
+          <input
+            type="number"
+            id="amount"
+            name="amount"
+            required
+            min="1"
+            class="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-semibold"
+        >
+          Pay Now
+        </button>
+      </form>
+
+      <div id="status" class="mt-4 text-center text-sm text-gray-600"></div>
     </div>
 
     <script>
-        async function initiatePayment() {
-            const phone = document.getElementById('phone').value;
-            const statusDiv = document.getElementById('status');
-            const button = document.querySelector('button');
+      const form = document.getElementById("stkForm");
+      const statusBox = document.getElementById("status");
 
-            if (!/^07\d{8}$/.test(phone)) {
-                statusDiv.textContent = 'Invalid phone number format';
-                return;
-            }
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        statusBox.textContent = "📲 Sending STK Push...";
+        statusBox.classList.remove("text-red-600", "text-green-600");
+        statusBox.classList.add("text-gray-600");
 
-            button.disabled = true;
-            statusDiv.textContent = 'Initiating payment...';
+        const phone = form.phone.value;
+        const amount = form.amount.value;
 
-            try {
-                const response = await fetch('/api/stkpush', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        phone: `254${phone.slice(1)}`,
-                        amount: '1'
-                    })
-                });
+        try {
+          const res = await fetch("/api/stkpush", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phone, amount }),
+          });
 
-                const data = await response.json();
-                if (data.success) {
-                    statusDiv.textContent = 'Check your phone for STK prompt!';
-                } else {
-                    statusDiv.textContent = `Error: ${data.error}`;
-                }
-            } catch (error) {
-                statusDiv.textContent = 'Failed to connect to server';
-            } finally {
-                button.disabled = false;
-            }
+          const data = await res.json();
+
+          if (res.ok) {
+            statusBox.textContent = "✅ STK Push sent! Check your phone.";
+            statusBox.classList.remove("text-gray-600");
+            statusBox.classList.add("text-green-600");
+          } else {
+            statusBox.textContent = `❌ Error: ${data.details?.errorMessage || "Unknown error"}`;
+            statusBox.classList.remove("text-gray-600");
+            statusBox.classList.add("text-red-600");
+          }
+        } catch (err) {
+          statusBox.textContent = "⚠️ Network error. Please try again.";
+          statusBox.classList.remove("text-gray-600");
+          statusBox.classList.add("text-red-600");
         }
+      });
     </script>
-</body>
+  </body>
 </html>
