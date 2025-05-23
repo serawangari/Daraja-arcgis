@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as axios from 'axios';
+import axios from 'axios';
 import { getAccessToken } from '../utils/darajaAuth';
-
 
 // Define payload interface
 interface STKPayload {
@@ -18,40 +17,55 @@ interface STKPayload {
   TransactionDesc: string;
 }
 
+// Helper to get EAT timestamp in YYYYMMDDHHmmss
+function getEATTimestamp(): string {
+  const date = new Date();
+  // Convert to EAT (UTC+3)
+  date.setUTCHours(date.getUTCHours() + 3);
+  const yyyy = date.getUTCFullYear();
+  const MM = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  const HH = String(date.getUTCHours()).padStart(2, '0');
+  const mm = String(date.getUTCMinutes()).padStart(2, '0');
+  const ss = String(date.getUTCSeconds()).padStart(2, '0');
+  return `${yyyy}${MM}${dd}${HH}${mm}${ss}`;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Get access token first
     const accessToken = await getAccessToken();
 
+    // Get env variables
+    const shortcode = process.env.DARAJA_BUSINESS_SHORT_CODE!;
+    const passkey = process.env.DARAJA_PASSKEY!;
+    const baseUrl = process.env.BASE_URL!;
+
+    // Generate EAT timestamp ONCE
+    const timestamp = getEATTimestamp();
+
+    // Generate password
+    const password = Buffer.from(`${shortcode}${passkey}${timestamp}`).toString('base64');
+
     // Define your payload
     const payload: STKPayload = {
-      BusinessShortCode: process.env.DARAJA_BUSINESS_SHORT_CODE!,
-      Password: Buffer.from(
-        `${process.env.DARAJA_BUSINESS_SHORT_CODE}${process.env.DARAJA_PASSKEY}${new Date()
-          .toISOString()
-          .replace(/[-:TZ.]/g, '')
-          .slice(0, 14)}`
-      ).toString('base64'),
-      Timestamp: new Date()
-        .toISOString()
-        .replace(/[-:TZ.]/g, '')
-        .slice(0, 14),
+      BusinessShortCode: shortcode,
+      Password: password,
+      Timestamp: timestamp,
       TransactionType: 'CustomerPayBillOnline',
       Amount: req.body.amount,
       PartyA: req.body.phone,
-      PartyB: process.env.DARAJA_BUSINESS_SHORT_CODE!,
+      PartyB: shortcode,
       PhoneNumber: req.body.phone,
-      CallBackURL: `${process.env.BASE_URL}/api/callback`,
+      CallBackURL: `${baseUrl}/api/callback`,
       AccountReference: 'Test',
       TransactionDesc: 'Test Payment'
     };
-// In stkpush.ts
-console.log('Full Password Generation:', 
-  `${process.env.DARAJA_BUSINESS_SHORT_CODE}${process.env.DARAJA_PASSKEY}${payload.Timestamp}`
-);
 
-// Verify timestamp format matches:
-console.log('Timestamp:', payload.Timestamp); // Should be YYYYMMDDHHmmss format
+    // Debug logs
+    console.log('Full Password Generation:', `${shortcode}${passkey}${timestamp}`);
+    console.log('Timestamp:', timestamp); // Should be EAT, YYYYMMDDHHmmss
+
     // Make the request
     const response = await axios.post(
       'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
