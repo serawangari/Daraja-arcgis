@@ -20,7 +20,6 @@ interface STKPayload {
 // Helper to get EAT timestamp in YYYYMMDDHHmmss
 function getEATTimestamp(): string {
   const date = new Date();
-  // Convert to EAT (UTC+3)
   date.setUTCHours(date.getUTCHours() + 3);
   const yyyy = date.getUTCFullYear();
   const MM = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -33,24 +32,19 @@ function getEATTimestamp(): string {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    // Get access token first
     const accessToken = await getAccessToken();
 
-    // Get env variables
     const shortcode = process.env.DARAJA_BUSINESS_SHORT_CODE!;
     const passkey = process.env.DARAJA_BUSINESS_SHORT_CODE_PASSKEY!;
     const baseUrl = process.env.BASE_URL!;
-    if  (!passkey) {
+
+    if (!passkey) {
       console.error("❌ DARAJA_BUSINESS_SHORT_CODE_PASSKEY is undefined!");
     }
 
-    // Generate EAT timestamp ONCE
     const timestamp = getEATTimestamp();
-
-    // Generate password
     const password = Buffer.from(`${shortcode}${passkey}${timestamp}`).toString('base64');
 
-    // Define your payload
     const payload: STKPayload = {
       BusinessShortCode: shortcode,
       Password: password,
@@ -65,11 +59,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       TransactionDesc: 'Test Payment'
     };
 
-    // Debug logs
     console.log('Full Password Generation:', `${shortcode}${passkey}${timestamp}`);
-    console.log('Timestamp:', timestamp); // Should be EAT, YYYYMMDDHHmmss
+    console.log('Timestamp:', timestamp);
 
-    // Make the request
     const response = await axios.post(
       'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
       payload,
@@ -80,12 +72,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     );
 
-    res.status(200).json(response.data);
+    // ✅ SUCCESS: Send structured response
+    res.status(200).json({
+      success: true,
+      message: "Prompt sent successfully",
+      data: response.data
+    });
+
   } catch (error: any) {
     console.error('STK Push Error:', error.response?.data || error.message);
+
+    // ❌ ERROR: Send structured error response
     res.status(500).json({
+      success: false,
       error: 'STK push failed',
-      details: error.response?.data || error.message
+      details: error.response?.data?.errorMessage || error.message
     });
   }
 }
